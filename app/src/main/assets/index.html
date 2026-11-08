@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#071521">
+  <title>Slovak Quest</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">SQ</div>
+        <div>
+          <div class="brand-title">Slovak Quest</div>
+          <div class="offline-badge"><span class="dot"></span> OFFLINE • без аккаунта</div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat" title="Опыт"><span>⚡</span><b id="xpTop">0</b></div>
+        <div class="stat" title="Монеты"><span>🪙</span><b id="coinsTop">0</b></div>
+        <div class="stat" title="Серия"><span>🔥</span><b id="streakTop">0</b></div>
+      </div>
+    </header>
+
+    <main id="screen"></main>
+
+    <nav class="bottom-nav">
+      <button data-nav="map" class="nav-btn active"><span>🗺️</span><small>Карта</small></button>
+      <button data-nav="missions" class="nav-btn"><span>🎯</span><small>Миссии</small></button>
+      <button data-nav="review" class="nav-btn"><span>🧠</span><small>Повтор</small></button>
+      <button data-nav="profile" class="nav-btn"><span>🏆</span><small>Профиль</small></button>
+    </nav>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <div id="modal" class="modal hidden"><div class="modal-card" id="modalCard"></div></div>
+  <script src="game.js"></script>
+</body>
+</html>

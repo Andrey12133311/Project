@@ -1,5 +1,9 @@
 name: Build Slovak Quest APK
 
+concurrency:
+  group: slovak-quest-apk
+  cancel-in-progress: true
+
 on:
   push:
     branches: [ "main" ]

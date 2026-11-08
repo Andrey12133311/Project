@@ -2,38 +2,30 @@ package com.andrey.slovakquest;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.View;
+import android.speech.tts.TextToSpeech;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.ProgressBar;
-import android.widget.FrameLayout;
+import java.util.Locale;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements TextToSpeech.OnInitListener {
     private WebView webView;
+    private TextToSpeech tts;
+    private boolean ttsReady = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        FrameLayout root = new FrameLayout(this);
-
         webView = new WebView(this);
-        webView.setLayoutParams(new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT));
-
-        ProgressBar progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        FrameLayout.LayoutParams progressParams = new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT, 8);
-        progress.setLayoutParams(progressParams);
-
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
         settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(false);
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
@@ -41,22 +33,53 @@ public class MainActivity extends Activity {
         settings.setUseWideViewPort(true);
 
         webView.setWebViewClient(new WebViewClient());
-        webView.setWebChromeClient(new WebChromeClient() {
-            @Override
-            public void onProgressChanged(WebView view, int newProgress) {
-                progress.setProgress(newProgress);
-                progress.setVisibility(newProgress >= 100 ? View.GONE : View.VISIBLE);
-            }
-        });
+        webView.setWebChromeClient(new WebChromeClient());
+        webView.addJavascriptInterface(new NativeBridge(), "AndroidNative");
+        setContentView(webView);
 
-        root.addView(webView);
-        root.addView(progress);
-        setContentView(root);
+        tts = new TextToSpeech(this, this);
 
         if (savedInstanceState == null) {
-            webView.loadUrl("https://slovak-quest-andrej-b2.andrejgrgrn966.chatgpt.site");
+            webView.loadUrl("file:///android_asset/index.html");
         } else {
             webView.restoreState(savedInstanceState);
+        }
+    }
+
+    @Override
+    public void onInit(int status) {
+        if (status == TextToSpeech.SUCCESS) {
+            int result = tts.setLanguage(new Locale("sk", "SK"));
+            ttsReady = result != TextToSpeech.LANG_MISSING_DATA
+                    && result != TextToSpeech.LANG_NOT_SUPPORTED;
+            tts.setSpeechRate(0.88f);
+        }
+    }
+
+    public class NativeBridge {
+        @JavascriptInterface
+        public void speak(String text) {
+            if (ttsReady && text != null) {
+                tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "slovak_quest");
+            }
+        }
+
+        @JavascriptInterface
+        public boolean isTtsReady() {
+            return ttsReady;
+        }
+
+        @JavascriptInterface
+        public void setSpeechRate(float rate) {
+            if (tts != null) {
+                float safe = Math.max(0.55f, Math.min(rate, 1.35f));
+                tts.setSpeechRate(safe);
+            }
+        }
+
+        @JavascriptInterface
+        public void stopSpeech() {
+            if (tts != null) tts.stop();
         }
     }
 
@@ -68,18 +91,17 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
-        }
+        if (webView != null && webView.canGoBack()) webView.goBack();
+        else super.onBackPressed();
     }
 
     @Override
     protected void onDestroy() {
-        if (webView != null) {
-            webView.destroy();
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
         }
+        if (webView != null) webView.destroy();
         super.onDestroy();
     }
 }
